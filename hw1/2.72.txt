@@ -1,0 +1,15 @@
+/* Copy integer into buffer if space is available */
+/* WARNING: The following code is buggy */
+
+void copy_int(int val, void *buf, int maxbytes) {
+    if (maxbytes-sizeof(val) >= 0)
+        memcpy(buf, (void *) &val, sizeof(val));
+}
+
+A) sizeof(val) returns a size_t, which is an unsigned int.  Thus, the entire
+expression is evauluated according to unsigned arithmetic rules, which means
+every value is greater than or equal to zero, so the if statement always
+evaulates to true the statement is always executed
+
+B) all you need is maxbytes to be greater than sizeof(val), so
+if(maxbytes >= sizeof(val)) works.

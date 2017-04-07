@@ -1,0 +1,9 @@
+A)Y = 0.yyyyyyy...
+Y * 2^k = y.yyyyyyy...
+Y * 2^k = y + 0.yyyyyyy... = y + Y
+Y * 2^k = y + Y
+Y = y/(2^k - 1)
+
+B) a) 101, Y = 5/7
+b) 0110, Y = 6/16 = 2/5
+c) 010011, Y = 19/63
