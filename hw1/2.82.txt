@@ -1,10 +1,46 @@
 A) (x < y) == (-x > -y)
-Always true, because 
+Not true, because T_MIN * -1 is still equal to T_MIN, so if x == T_MIN and y==1,
+(T_MIN < 1) == (T_MIN > -5) is false, which returns 0
 
 B) ((x+y) << 4) + y-x = 17*y + 15*x
+((x+y) << 4) = 16*y + 16*x
+This is always true.  4 left shifts is equilvalent to multiplying by 16.  There is a danger of losing
+the most significant digits, however since they are both the same operation,
+then they both end up with the same bits.
 
 C) ~x + ~y + 1 == ~(x + y)
+~x = -1 - x, from -x = ~x + 1
+-1 - x - 1 - y + 1 == ~(x + y)
+-x -y -1 = ~(x+y)
+-(x+y) = ~(x + y) + 1
+This expression will always return 1 because it is essentially equialvent to the
+original two's complement's negation rule -x = ~x + 1.  
 
-D) (ux -uy) == -(unsigned)(y-x)
+D) (ux - uy) == -(unsigned)(y-x)
+True, because this is comparing unsigned to a signed int casted to an unsigned, 
+so the operation is treated as an unsigned comparison. After you negate the
+right hand side the bit patterns for both sides are the same, thus both are 
+equal always.
 
 E) ((x >> 2) << 2) <= x
+This is always true, because it x was 1000 ... 0000, then shifting two digits to
+the right will lose no information, then shifting back to the left two bits will
+restore x back to it's original state.  However, even if x was 1000 ... 0011,
+shifting right will lose the last two bits, and then shifting left will make x 
+1000 ... 0000, which is less than the original x, so the statement still holds
+true.
+
+F) x >> 1 == (ux >> 1) + (ux & (-1 << 31))
+This is always true.  The signed int is converted to an unsigned int when it is
+compared to another unsigned int. (ux & (-1 << 31)) applies a mask to ux to
+determine if the most significant digit is a 1.  Right shifts with unsigned
+values are logical, so in order to to preserve the most significant value, you
+have to add a 1 to the most significant digit using the mask. Assuming right
+shift with signed value is arithmentic, this should always equal 1.
+
+G) x % 128 == (x & 127)
+127 = 1111111
+This should always be true, because the modulo takes the remainder of the when x is
+divided by 128, which reside in the last 7 least significant bits.  x & 127
+applies a bit mask to x which only returns the last 7 bits as well, so both 
+side sare the same. 
