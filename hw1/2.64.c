@@ -6,6 +6,3 @@ int any_odd_one(unsigned x){
     return (x&0xAAAAAAAA) != 0;
 }
 
-int main(void){
-    return printf(any_odd_one(0)) < 0;
-}

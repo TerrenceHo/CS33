@@ -40,7 +40,8 @@ shift with signed value is arithmentic, this should always equal 1.
 
 G) x % 128 == (x & 127)
 127 = 1111111
-This should always be true, because the modulo takes the remainder of the when x is
-divided by 128, which reside in the last 7 least significant bits.  x & 127
-applies a bit mask to x which only returns the last 7 bits as well, so both 
-side sare the same. 
+This is false, because the modulo operator in C is implemented as a remainder
+function, which would return negative if x is a negative.  However, x should
+never be negative, and x & 127 will often not match up because of this
+discrepancy.  For example -5%128 will return -5, whereas -5 & 127 returns 123,
+which should be the correct value.

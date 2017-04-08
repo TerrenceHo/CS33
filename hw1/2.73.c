@@ -1,17 +1,11 @@
 #include <stdio.h>
 #include <limits.h>
 
-/* Addition that saturates to TMin or TMax */
 int saturating_add(int x, int y){
-    int sum = x + y;
-    int posO;
-    int negO;
-
+    int sum = (unsigned int) x + (unsigned int) y;
+    int posO = ( ~(x & INT_MIN) & ~(y & INT_MIN) & (sum & INT_MIN) );
+    int negO = ( (x & INT_MIN) & (y & INT_MIN) & ~(sum & INT_MIN));
+    (posO) && (sum=INT_MAX);
+    (negO) && (sum=INT_MIN);
     return sum;
 }
-
-int main(void){
-
-    return 0;
-}
-
