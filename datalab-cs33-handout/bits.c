@@ -139,6 +139,9 @@ NOTES:
  *   Rating: 4 
  */
 int bang(int x) {
+    /* Negate x, then OR the result with x, thus making the first bit a 1 if x
+     * is a non-zero number.  Shift left 31 times, making the result -1 if it x
+     * is not a zero or 0 if it is.  Add one and return. */
     int invertedX = ~x + 1;
     int orX = (x | invertedX);
     int result = orX >> 31;
@@ -152,9 +155,7 @@ int bang(int x) {
  *   Rating: 4
  */
 int bitCount(int x) {
-    int count = 0;
-    //if the bit is a one, add it to count.       
-    return count;
+    return 2;
 }
 /* 
  * bitOr - x|y using only ~ and & 
@@ -164,6 +165,7 @@ int bitCount(int x) {
  *   Rating: 1
  */
 int bitOr(int x, int y) {
+    /* Flip both numbers, AND them, and flip it result. */
     int masked = (~x & ~y);
     int result = ~masked;
     return result;
@@ -206,9 +208,12 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int getByte(int x, int n) {
+    /* Shift multiple n by 8 to get the location of first bit we want then shift
+     * right to that bit and apply a mask on the last byte.*/
     int shift = n << 3;
     int xShift = x >> shift;
     int result = xShift & 0xFF;
+    return result;
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -218,7 +223,8 @@ int getByte(int x, int n) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+    int result = (!x | y);
+    return result;
 }
 /* 
  * isPositive - return 1 if x > 0, return 0 otherwise 
@@ -228,10 +234,15 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 3
  */
 int isPositive(int x) {
+    /* We want to ultiamtely return the sign bit, so we first flip the sign bit */ 
+    /* with ~x. ~x + 1 accounts for zero.  We then right shift 31 times and then */ 
+    /* mask it to get the last bit. */
     int notX = ~x;
-    int result = notX >> 31;
-    return result;
+    notX = notX & (~x + 1);
+    return (notX >> 31) & 1;
+
 }
+
 /* 
  * logicalShift - shift x to the right by n, using a logical shift
  *   Can assume that 0 <= n <= 31
@@ -241,7 +252,10 @@ int isPositive(int x) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
-  return 2;
+    int shiftedX = x >> n;
+    int mask = ~(((0x1 << 31) >> n);
+    mask = mask << 1;
+    return shiftedX & mask;
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -250,6 +264,7 @@ int logicalShift(int x, int n) {
  *   Rating: 1
  */
 int tmin(void) {
+   /* shit -1 31 times to the left to get 0x80000000, which is T_MIN */ 
     int x = -1;
     int result = x << 31;
     return result;
