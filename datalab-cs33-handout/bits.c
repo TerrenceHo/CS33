@@ -1,7 +1,7 @@
 /* 
  * CS:APP Data Lab 
  * 
- * <Please put your name and userid here>
+ * <Terrence Ho 804793446>
  * 
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
@@ -139,7 +139,10 @@ NOTES:
  *   Rating: 4 
  */
 int bang(int x) {
-  return 2;
+    int invertedX = ~x + 1;
+    int orX = (x | invertedX);
+    int result = orX >> 31;
+    return result;
 }
 /*
  * bitCount - returns count of number of 1's in word
@@ -149,7 +152,9 @@ int bang(int x) {
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+    int count = 0;
+    //if the bit is a one, add it to count.       
+    return count;
 }
 /* 
  * bitOr - x|y using only ~ and & 
@@ -159,7 +164,9 @@ int bitCount(int x) {
  *   Rating: 1
  */
 int bitOr(int x, int y) {
-  return 2;
+    int masked = (~x & ~y);
+    int result = ~masked;
+    return result;
 }
 /*
  * bitRepeat - repeat x's low-order n bits until word is full.
