@@ -142,7 +142,7 @@ int bang(int x) {
     int invertedX = ~x + 1;
     int orX = (x | invertedX);
     int result = orX >> 31;
-    return result;
+    return result + 1;
 }
 /*
  * bitCount - returns count of number of 1's in word
@@ -206,7 +206,9 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int getByte(int x, int n) {
-  return 2;
+    int shift = n << 3;
+    int xShift = x >> shift;
+    int result = xShift & 0xFF;
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -226,7 +228,9 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return 2;
+    int notX = ~x;
+    int result = notX >> 31;
+    return result;
 }
 /* 
  * logicalShift - shift x to the right by n, using a logical shift
@@ -246,5 +250,7 @@ int logicalShift(int x, int n) {
  *   Rating: 1
  */
 int tmin(void) {
-  return 2;
+    int x = -1;
+    int result = x << 31;
+    return result;
 }
