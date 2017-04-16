@@ -155,7 +155,24 @@ int bang(int x) {
  *   Rating: 4
  */
 int bitCount(int x) {
-    return 2;
+    /* mask takes in the first bit of every byte.  Then each sum takes in the
+     * first bit of every byte.  Do this for every bit in each byte by shifting
+     * right once every time.  Then add up all the sums and the result takes in
+     * each byte and adds it all together.  Each byte in sum should hold the
+     * number of 1 bits in x for the byte.  Result is the number of 1 bits.
+     */
+    int mask = 0x1 | (0x1<<8) | (0x1<<16) | (0x1<<24); //0000 0001 0000 0001 0000 0001 0000 0001
+    int sum1 = x & mask;
+    int sum2 = (x >> 1) & mask;
+    int sum3 = (x >> 2) & mask;
+    int sum4 = (x >> 3) & mask;
+    int sum5 = (x >> 4) & mask;
+    int sum6 = (x >> 5) & mask;
+    int sum7 = (x >> 6) & mask;
+    int sum8 = (x >> 7) & mask;
+    int sum = sum1 + sum2 + sum3 + sum4 + sum5 + sum6 + sum7 + sum8;
+    int result = (sum & 0xFF) + ((sum >> 8) & 0xFF) + ((sum >> 16) & 0xFF) + ((sum >> 24) & 0xFF);
+    return result;
 }
 /* 
  * bitOr - x|y using only ~ and & 
@@ -185,9 +202,26 @@ int bitOr(int x, int y) {
  *   Rating: 4
  */
 int bitRepeat(int x, int n) {
-  return 2;
+    /* nMax is used to check if it is 32.  If it is, jsut return it.  Otherwise,
+     * use maskBits to find the bits we are copying.  Then shift it in
+     * increments of n * 2^i, where i ranges from 0-4.  However, if n * 2^i is
+     * greater than 32, it won't shift it at all, or attempts to shift left by 0
+     * times.  Return the maskBits value.
+     */
+    int nMax = ~(!(n & 31)-1);  //Checks for n==32
+    int maskBits = ~(~0 << n) & x;  //Mask lower n bits, which will be copied
+    int shift2 = n * 2;
+    int shift4 = n * 4;
+    int shift8 = n * 8;
+    int shift16 = n * 16;
+    maskBits = maskBits | maskBits << n;
+    maskBits = maskBits | maskBits << (shift2 * !(shift2/32));
+    maskBits = maskBits | maskBits << (shift4 * !(shift4/32));
+    maskBits = maskBits | maskBits << (shift8 * !(shift8/32));
+    maskBits = maskBits | maskBits << (shift16 * !(shift16/32));
+    return (maskBits & ~nMax) | (x & nMax);
 }
-/* 
+/*
  * fitsBits - return 1 if x can be represented as an 
  *  n-bit, two's complement integer.
  *   1 <= n <= 32
@@ -197,7 +231,14 @@ int bitRepeat(int x, int n) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+    /* when you shift left by n-1, the remainder should either all be 1 or zero,
+     * and so by getting by inverse x and x with a sign mask, you can determine
+     * if it is all zero at the end.  If it is, then it can fit within the bit
+     * n.  */
+    int sign = x >> 31; //sign bit
+    int shift = n + ~0;
+    int result = (~x & sign) + (x & ~sign);
+    return !(result >> shift);
 }
 /* 
  * getByte - Extract byte n from word x
@@ -223,8 +264,18 @@ int getByte(int x, int n) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-    int result = (!x | y);
-    return result;
+    /*  negate x, and find the difference between the two numbers. Return the
+     *  opposite of the sign of the difference.  We check for overflow if the
+     *  signs of x and y are different, and that x is a negative number.  If
+     *  either either flow happened with x as a negative number or !diff sign is
+     *  true, return 1, else 0.
+    */ 
+
+    int diffSign = (~x + 1 + y) >> 31 & 1; 
+    int xSign = (0x1 << 31) & x;
+    int ySign = (0x1 << 31) & y;
+    int oCheck = ((xSign ^ ySign) >> 31) & 1; 
+    return (oCheck & (xSign>>31)) | (!diffSign & !oCheck);
 }
 /* 
  * isPositive - return 1 if x > 0, return 0 otherwise 
@@ -240,7 +291,6 @@ int isPositive(int x) {
     int notX = ~x;
     notX = notX & (~x + 1);
     return (notX >> 31) & 1;
-
 }
 
 /* 
@@ -252,9 +302,12 @@ int isPositive(int x) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
+    /* Shift right x by n, and then create a mask that excludes all the bits in
+     * the very beginning that are supposed to be ignored. And shifted x and the
+     * mask.*/
     int shiftedX = x >> n;
-    int mask = ~(((0x1 << 31) >> n);
-    mask = mask << 1;
+    int m = (0x1 << 31) >> n;
+    int mask = ~(m << 1);
     return shiftedX & mask;
 }
 /* 
@@ -264,8 +317,8 @@ int logicalShift(int x, int n) {
  *   Rating: 1
  */
 int tmin(void) {
-   /* shit -1 31 times to the left to get 0x80000000, which is T_MIN */ 
-    int x = -1;
+   /* shit 0x1 31 times to the left to get 0x80000000, which is T_MIN */ 
+    int x = 0x1;
     int result = x << 31;
     return result;
 }
