@@ -1,0 +1,29 @@
+Terrence Ho
+804793446
+
+3.60
+_di = x
+_si = n
+_cx = n
+_dx = mask
+_ax = result
+
+%rdi = x
+%esi = n
+%ecx =
+
+A) x is held in rdi
+    n is held in ecx
+    result is held in %rax
+    mask is held in eax
+
+B) result initial value is 0
+    mask initial value is 1
+
+C) Test if rdx is equal to zero, in which case it will continue
+
+D) mask is shifted by value of lower byte of n
+
+E)result is OR with masked x
+
+
