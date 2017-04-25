@@ -1,3 +1,5 @@
+// Terrence Ho
+// 804793446
 long loop(long x, long n){
     long result = 0;
     long mask;
