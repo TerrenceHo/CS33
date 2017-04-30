@@ -1,0 +1,34 @@
+Terrence Ho
+804793446
+
+Instructions used
+
+1) gdb ~eggert/bin64/bin/emacs-25.2  
+This instruction starts up emacs in gdb.  I used this once everytime before I
+started a debugging session.
+
+2) (gdb) break Ftimes
+This was used to set a breakpoint at Ftimes, the function that we are stepping
+through.  I used this command once everytime after I started emacs with gdb
+
+3) (gdb) r -batch -eval '(print (* 1250284240-1844255039))fdsafkjsajflsajfklsdlsdkfdslkdshfjksaquit'
+This command was used after setting a breakpoint at Ftimes, which let the gdb
+debugger run until it hit a breakpoint at Ftimes.  After this, we can begin to
+step through the function's machine code.
+
+4) (gdb) set disassemble-next-line on
+This command was used once we started stepping through the machine code of the
+function, so that we can see the assembly level instructions of each line as it
+is being executed.
+
+5) (gdb) si
+This command was used to step through the machine level code of the Ftimes
+function, and was used in conjunction with set disassemble-next-line on to give
+use the disassembled version of the machine code.  si stepped into functions,
+and also told us when we changed lines or functions by displaying the line
+number in the Ftimes source code.  Lastly, this function gave us the amount of
+memory each instruction took up, in bytes
+
+6) (gdb) info registers OR info registers $rax (or some other register)
+This command gave us the information about the registers, so that we could keep
+track of information like variables that are being passed around.  

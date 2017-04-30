@@ -1,0 +1,19 @@
+Terrence Ho
+804793446
+
+A)
+e1.p:    0 bytes
+e1.y:    8 bytes
+e2.x:    0 bytes
+e2.next: 8 bytes
+
+B) 
+e1 requires 16 bytes
+e2 requires 16 bytes
+Because it is a union, it will require at most 16 bytes
+
+C)
+# Fix
+void proc (union ele *up) {
+    up->e2.next = *(up->e2) - up->e2;
+}

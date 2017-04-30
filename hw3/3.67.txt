@@ -1,0 +1,86 @@
+Terrence Ho
+804793446
+
+3.67
+
+A)
+------------------------------  <--- %rbp (highest addresss)
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|             |              |  <---%rsp + 24
+|             z              |  
+|             |              |  <---%rsp + 16
+|           s.p=&z           | 
+|             |              |  <---%rsp + 8
+|         s.a[1]=y           |
+|             |              |  <---%rsp
+|         s.a[0]=x           |  
+------------------------------  <--- lowest addresss
+
+B) The call to process passes in the register %rdi.  %rdi holds the address of
+%rsp offset by 64, which is where the struct strA s will be held.  
+
+C) The process accesses the elements in the struct s by calling dereferencing
+the %rsp pointer with offsets. However, after a call to the stack pointer, the
+value of %rsp is substract by eight(To account for the fact you have to store
+the return address), which accounts for why the offsets for %rsp are increased 
+by eight.  
+
+s.a[0]: rsp + 8
+s.a[1]: rsp + 16
+s.p:    rsp + 24
+
+D) After accessing s.a[0] and s.a[1] and storing them into %rcx, they are placed
+into %rdi + 8 and %rdi respectively, and *s.p is stored in %rdx and then stored
+in %rdi + 16.  
+
+E)
+------------------------------  <--- %rbp (highest addresss)
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|             |              |  <---%rsp + 80
+|           r.q=z            | 
+|             |              |  <---%rsp + 72
+|         r.u[1]=x           |
+|             |              |  <---%rsp + 64
+|         r.u[0]=y           |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|                            |
+|             |              |  <---%rsp + 24
+|             z              |  
+|             |              |  <---%rsp + 16
+|           s.p=&z           | 
+|             |              |  <---%rsp + 8
+|         s.a[1]=y           |
+|             |              |  <---%rsp
+|         s.a[0]=x           |  
+------------------------------  <--- lowest addresss
+
+F) Structures are passed in the form addresses, and elements of a struct are
+accessed by offsets from that address.  
+When structures are returned, they are also passed back as an address.
+
