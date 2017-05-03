@@ -15,5 +15,5 @@ Because it is a union, it will require at most 16 bytes
 C)
 # Fix
 void proc (union ele *up) {
-    up->e2.next = *(up->e2) - up->e2;
+    up->e2.next->e1.y = *(up->e2.next->e1.p) - up->e2.x;
 }
