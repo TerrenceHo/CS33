@@ -34,11 +34,11 @@ A)
 ------------------------------  <--- lowest addresss
 
 B) The call to process passes in the register %rdi.  %rdi holds the address of
-%rsp offset by 64, which is where the struct strA s will be held.  
+%rsp offset by 64, which is where the struct strA s is held.  
 
-C) The process accesses the elements in the struct s by calling dereferencing
+C) The process accesses the elements in the struct s by calling and dereferencing
 the %rsp pointer with offsets. However, after a call to the stack pointer, the
-value of %rsp is substract by eight(To account for the fact you have to store
+value of %rsp is substracted by eight(To account for the fact you have to store
 the return address), which accounts for why the offsets for %rsp are increased 
 by eight.  
 

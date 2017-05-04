@@ -1,18 +1,18 @@
 Terrence Ho
 804793446
 
-A)
+A) Offsets
 e1.p:    0 bytes
 e1.y:    8 bytes
 e2.x:    0 bytes
 e2.next: 8 bytes
 
-B) 
+B) Bytes
 e1 requires 16 bytes
 e2 requires 16 bytes
 Because it is a union, it will require at most 16 bytes
 
-C)
+C) 
 # Fix
 void proc (union ele *up) {
     up->e2.next->e1.y = *(up->e2.next->e1.p) - up->e2.x;
