@@ -5,22 +5,47 @@ Terrence Ho
 1) Explain why the instructions in the trace did not produce the correct
 mathematical result. Which instructions caused the problem, exactly?
 
-2) Explain why the shell command emacs -batch -eval '(print most-positive-fixnum)'
-outputs 2305843009213693951. Where did the number 2305843009213693951 come from?
-Explain in terms of the Emacs source code.
+A: When emacs is computing with numbers, it treats all objects as it's own
+special object called an Elisp Object that uses the first 2 bits of the object
+as a tagged pointer for easy access.  Thus, this only leaves 62 bits to document
+such as numbers.  Emacs usually shifts right by two bits to multiply correctly,
+but shifting numbers inherently loses significant digits, and the instruction
+at lea 0x2(,%rbp,4),%rax shifts left to make room for the tagged pointer at
+the end of the integer, but loses the two most significant digits in the
+process, explaining the wrong mathematical result. 
 
-3) Explain why the shell command emacs -batch -eval '(print (* most-positive-fixnum
+2) Explain why the shell command emacs -Q -batch -eval '(print
+most-negative-fixnum)' outputs -2305843009213693952. Where did the number come
+from? Explain in terms of the Emacs source code.
+
+A: -2305843009213693952 is 2^61.  Remembering that emacs uses two bits out of 64 
+of an integer to hold a tagged pointer, we have 62 bits of information available 
+for the integer.  Half of 2^62 is used to hold negative numbers, so 2^61.
+
+3)Explain why the shell command emacs -Q -batch -eval '(print (*
+most-positive-fixnum most-positive-fixnum most-positive-fixnum
 most-positive-fixnum))' outputs only 1.
+
+A:  most-positive-fixum prints out the maximum integer emacs can hold.
+Multiplying the most positive number by the most positive number will overflow,
+resulting in one.  Multiplying most-positive-fixum 4 times still results in 1. 
 
 4) The Emacs executable was compiled with GCC's -O2 option. Suppose it had also
 been compiled with -fsanitize=undefined. Explain any problems the trace would
 run into, or if there would not be a problem explain why not.
 
-5) Similarly, discuss whether and how -fwrapv would have caused problems.
+A: The emacs code already checks for overflow, and will change it's behavior if
+it detects overflow.  -fsanitize=undefined is a fast underfined behavior checker
+that will also check for overflow, which is essentially redudant.  With
+-fsanitize=underfined we check for overflow twice, which will not make our
+program crash but instead slow it down with needless checks, as well as making
+our program size larger.
 
-6) Suppose we assume -fwrapv is used. Suggest changes to how Emacs does integer
-multiplication that should help improve its performance. Focus on integer
-multiplication; don't alter the machinery Emacs uses to decide which flavor of
-multiplication to do.
-7) How significant are the efficiency differences discussed above, in the context
-of Emacs execution? ''
+5) There is a recently-discovered security vulnerability in Emacs 25.2, which
+you can exercise by running emacs -Q -batch -eval '(print (format-time-string
+"%Y-%m-%d %H:%M:%S %Z" nil (concat (make-string 1000 ?X) "0")))'. Briefly
+describe the bug's low-level manifestation by crashing Emacs, using GDB's
+backtrace command, and following up with any other GDB commands that you think
+might be of interest.'
+
+A:
