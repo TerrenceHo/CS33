@@ -1,12 +1,27 @@
 Terrence Ho
 804793446
 
-#include <limits.h>
-#include <stdbool.h>
-long big = LONG_MAX;
-
-bool
-testovf (void)
+_Bool
+testovf (long n)
 {
-	return big + LONG_MAX < big;
+    return n + 9223372036854775807 < n;
 }
+
+
+Compiling with -o2
+This flag produces the fast code without regard to overflow or other undefined
+behavior.  It simply wants to produce the fastest code possible.
+
+Compiling with -O2 -fwrapv
+This flag ensures that signed operations will wrap when overflowing and will not
+check to see if an operation did overflow.  However, it seems to have generated
+the same code as the compilation without -fwrapv.
+
+Compiling with -O2 -fsanitize=undefined
+This compiles with the flag that checks if undefined behavior happens, including
+overflow.  If it does, a runtime error is produced but the program keeps on
+running.  We can see this in the assembly instruction jno .L2, where it jumps if
+overflow does not occur to finish the calculation, otherwise it continues the
+calculation but keeps overflow in mind.
+
+
