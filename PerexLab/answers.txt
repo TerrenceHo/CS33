@@ -6,13 +6,13 @@ Terrence Ho
 mathematical result. Which instructions caused the problem, exactly?
 
 A: When emacs is computing with numbers, it treats all objects as it's own
-special object called an Elisp Object that uses the first 2 bits of the object
-as a tagged pointer for easy access.  Thus, this only leaves 62 bits to document
+special object called an Elisp Object that uses the two last bits of the object
+as a tagged pointer for easy access.  Thus, this only leaves 62 bits for information  
 such as numbers.  Emacs usually shifts right by two bits to multiply correctly,
 but shifting numbers inherently loses significant digits, and the instruction
 at lea 0x2(,%rbp,4),%rax shifts left to make room for the tagged pointer at
 the end of the integer, but loses the two most significant digits in the
-process, explaining the wrong mathematical result. 
+process and truncates the number, explaining the wrong mathematical result. 
 
 2) Explain why the shell command emacs -Q -batch -eval '(print
 most-negative-fixnum)' outputs -2305843009213693952. Where did the number come
@@ -48,4 +48,16 @@ describe the bug's low-level manifestation by crashing Emacs, using GDB's
 backtrace command, and following up with any other GDB commands that you think
 might be of interest.'
 
-A:
+A: I used the command backtrace and backtrace full to look at what caused the
+with gdb.  The crash appears to be related to emacs's TZ environment variable,
+which calculates time and date.  The command put into emacs attempts to modify
+the TZ variable that holds the time string by adding a bnuch of extra "X"s.
+However, it does not want to create a new TZ variable and change the time that
+way because other threads of emacs may be using that TZ variable, so instead it
+attempts to modify the variable in place.  The TZ variable was created with a
+large amount of memory previously, but if the new string is too large it cannot
+simply allocate new memory because we cannot change the TZ variable. Thus,
+previous memory outside the TZ variable may be overwritten when the TZ string is
+copied into the TZ variable.  Then when a function is called to memory that was
+previously held in the overwritten memory space, it crashes because the memory
+has changed.  

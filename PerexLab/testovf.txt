@@ -8,20 +8,19 @@ testovf (long n)
 }
 
 
-Compiling with -o2
-This flag produces the fast code without regard to overflow or other undefined
-behavior.  It simply wants to produce the fastest code possible.
+Compiling with -o2 only produces a function that returns zero everytime, because
+it xors %eax,%eax and then returns 0 because the XOR of the same number produces
+zero.  This is because the function does not check if adding n + 9223372036854775807 
+will overflow and simply assumes that the function is always false, because 
+adding a positive number to n will always make it bigger.
 
-Compiling with -O2 -fwrapv
-This flag ensures that signed operations will wrap when overflowing and will not
-check to see if an operation did overflow.  However, it seems to have generated
-the same code as the compilation without -fwrapv.
+Compiling with -O2 -fwrapv produces a function that will wrap around correctly
+before doing the comparison, preventing an overflow.  If it overflows, it may
+return true, because the resulting number may be less than original n.  
 
-Compiling with -O2 -fsanitize=undefined
-This compiles with the flag that checks if undefined behavior happens, including
-overflow.  If it does, a runtime error is produced but the program keeps on
-running.  We can see this in the assembly instruction jno .L2, where it jumps if
-overflow does not occur to finish the calculation, otherwise it continues the
-calculation but keeps overflow in mind.
-
+Compiling with -O2 -fsanitize=undefined produces a function that will execute
+differently if it detected any overflow, producing a runtime error but
+continuing to execute anyway.  If there is overflow, the function jumps to .L6
+and calls __ubsan_handle_add_overflow to produce an error message before
+proceding to .L2, which compares the two numbers and determines if it is false.
 

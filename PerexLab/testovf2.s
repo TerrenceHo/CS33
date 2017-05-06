@@ -1,23 +1,15 @@
 	.file	"testovf.c"
 	.text
+	.p2align 4,,15
 	.globl	testovf
 	.type	testovf, @function
 testovf:
 .LFB0:
 	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	movq	%rdi, -8(%rbp)
-	movabsq	$9223372036854775807, %rdx
-	movq	-8(%rbp), %rax
-	addq	%rdx, %rax
-	cmpq	-8(%rbp), %rax
-	setl	%al
-	popq	%rbp
-	.cfi_def_cfa 7, 8
+	movabsq	$9223372036854775807, %rax
+	addq	%rdi, %rax
+	cmpq	%rax, %rdi
+	setg	%al
 	ret
 	.cfi_endproc
 .LFE0:

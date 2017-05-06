@@ -4,7 +4,7 @@ Terrence Ho
 Instructions used
 
 gdb ~eggert/bin64/bin/emacs-25.2  
-This instructi on starts up emacs in gdb.  I used this once everytime before I
+This instruction on starts up emacs in gdb.  I used this once everytime before I
 started a debugging session.
 
 (gdb) break Ftimes
@@ -40,3 +40,23 @@ found the command to disassemble-next-line, I never used this after.
 (gdb) set logging on
 This command was used to put the output to a gdb.txt file, in case I needed to
 look back at the commands I used.
+
+
+What didn't work:
+It took me a while to even figure out how to run gdb with emacs, because I
+previously kept using gdb emacs, not the eggert version.  I rarely used disas
+once I figured out that set disassemble-next-line on was giving me everything I
+needed.  I kept trying to use info func Ftimes to debug it, but I realized that
+didn't give me any low level information about the function while it was being
+debugged.  
+
+My routine:
+1) gdb ~eggert/bin64/bin/emacs-25.2
+2) (gdb) break Ftimes
+3) (gdb) r -Q -batch -eval '(print (* 1250284240 -1844255039))'
+4) (gdb) set logging on
+5) (gdb) set disassemble-next-line on
+6) (gdb) si
+7) (gdb) info registers OR info registers $rax (or some other register)
+Repeat steps 6) and 7) until I was done stepping through the function.  
+
