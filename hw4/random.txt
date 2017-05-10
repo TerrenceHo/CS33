@@ -5,17 +5,24 @@ Terrence Ho
 
 
 A) (float) x == (float) dx
+No, casting from double to float loses precision, as there is doubles have 52
+bits of of fraction whereas floats only have 23 bits for the fraction.  
 
-
-B) dx -dy == (double) (x-y)
-
+B) dx - dy == (double) (x-y)
+Because you subtract the ints first, if the subtraction results in overflow,
+then you will lose digits, whereas with floats, you will not overflow with
+either TMAX or TMIN.  
 
 C) (dx + dy) + dz = dx + (dy + dz)
-
+Always true, because order of operations does not affect doubles.
 
 D) (dx * dy) * dz = dx * (dy * dz)
-
+False, if two large numbers were multiplied and exceded the limit of 2^52 - 1
+range, then we would overflow with our double, and thus the result would not be
+equal if the operation on the other side did not overflow as well or overflowed
+differently. 
 
 E) dx / dx == dz / dz
-
+If dx == +0.0 or -0.0, then 0.0/0.0 would result in NAN, while dz != 0.0.  Thus,
+having a NAN would make this operation invalid.
 
