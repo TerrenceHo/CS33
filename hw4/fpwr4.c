@@ -10,13 +10,13 @@ float fpwr2(int x){
 
     if(x < -149){
         /* Too small */
-        exp = ---;
-        frac = ---;
-    } else if (x < ---){
+        exp = 0; 
+        frac = 0;
+    } else if (x < -126){
         /* Denormalized Result */
         exp = 0;
-        frac = ---;
-    } else if (x < ---){
+        frac = 1 << (x + 149);
+    } else if (x < 255){
         /* Normalized Result */
         exp = x + 127;
         frac = 0;
