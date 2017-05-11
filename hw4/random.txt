@@ -6,15 +6,25 @@ Terrence Ho
 
 A) (float) x == (float) dx
 No, casting from double to float loses precision, as there is doubles have 52
-bits of of fraction whereas floats only have 23 bits for the fraction.  
+bits of of fraction whereas floats only have 23 bits for the fraction.  This
+would only be a problem if x were equal to some large integer, like INT_MAX.
+In this case, (float)x would round down, as int to float conversion does not
+oveflow but round down.  (float)dx however, would be cast to infinity, since
+casting a double too large to fit in a float would cause the float to be
+represented at infinity.  
 
 B) dx - dy == (double) (x-y)
-Because you subtract the ints first, if the subtraction results in overflow,
-then you will lose digits, whereas with floats, you will not overflow with
-either TMAX or TMIN.  
+This is not always true.  Because you subtract the ints first, if the 
+subtraction results in overflow, then you will lose digits, whereas with doubles, 
+you will not overflow with either INT_MAX or INT_MIN because the double is large
+enough to fit INT_MAT or INT_MIN.  
 
 C) (dx + dy) + dz = dx + (dy + dz)
-Always true, because order of operations does not affect doubles.
+Always true, because order of operations does not affect doubles.  Because the
+doubles started out as ints, the largest possible value they could be would be
+INT_MAX and INT_MIN, and adding these values together could not cause overflow,
+because the double has enough bits to hold all these values.  Thus, this cannot
+overflow regardless of the order of operations, and so is always true.
 
 D) (dx * dy) * dz = dx * (dy * dz)
 False, if two large numbers were multiplied and exceded the limit of 2^52 - 1
@@ -23,6 +33,6 @@ equal if the operation on the other side did not overflow as well or overflowed
 differently. 
 
 E) dx / dx == dz / dz
-If dx == +0.0 or -0.0, then 0.0/0.0 would result in NAN, while dz != 0.0.  Thus,
-having a NAN would make this operation invalid.
+This does not always equal true. If dx == +0.0 or -0.0, then 0.0/0.0 would 
+result in NAN, while dz != 0.0.  Thus, having a NAN would make this operation invalid.
 
