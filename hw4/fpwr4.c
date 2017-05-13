@@ -4,7 +4,14 @@
 // 2.90
 
 static float u2f(unsigned u){
-    return float(u);
+    union {
+        unsigned u_num;
+        float f_num;
+    } result;
+    result.f_num = 0;
+    result.u_num = u;
+    return result.f_num;
+
 }
 
 /* Compute 4**x */
@@ -13,14 +20,14 @@ float fpwr4(int x){
     unsigned exp, frac;
     unsigned u;
 
-    if(x < -86){
+    if(x < -74){
         /* Too small */
         exp = 0; 
         frac = 0;
     } else if (x < -63){
         /* Denormalized Result */
         exp = 0;
-        frac = 1 << ((2 * x) + 86);
+        frac = 1 << (2 * (x + 74));
     } else if (x < 64){
         /* Normalized Result */
         exp = (2 * x) + 127;

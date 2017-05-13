@@ -11,7 +11,7 @@ would only be a problem if x were equal to some large integer, like INT_MAX.
 In this case, (float)x would round down, as int to float conversion does not
 oveflow but round down.  (float)dx however, would be cast to infinity, since
 casting a double too large to fit in a float would cause the float to be
-represented at infinity.  
+represented as infinity.  
 
 B) dx - dy == (double) (x-y)
 This is not always true.  Because you subtract the ints first, if the 
@@ -22,7 +22,7 @@ enough to fit INT_MAT or INT_MIN.
 C) (dx + dy) + dz = dx + (dy + dz)
 Always true, because order of operations does not affect doubles.  Because the
 doubles started out as ints, the largest possible value they could be would be
-INT_MAX and INT_MIN, and adding these values together could not cause overflow,
+INT_MAX or INT_MIN, and adding these values together could not cause overflow,
 because the double has enough bits to hold all these values.  Thus, this cannot
 overflow regardless of the order of operations, and so is always true.
 
