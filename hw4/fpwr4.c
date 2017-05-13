@@ -27,7 +27,7 @@ float fpwr4(int x){
     } else if (x < -63){
         /* Denormalized Result */
         exp = 0;
-        frac = 1 << (2 * (x + 74));
+        frac = 1 << ((2 * (x + 74)) + 1);
     } else if (x < 64){
         /* Normalized Result */
         exp = (2 * x) + 127;

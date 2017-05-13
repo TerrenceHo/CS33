@@ -5,13 +5,11 @@ Terrence Ho
 
 
 A) (float) x == (float) dx
-No, casting from double to float loses precision, as there is doubles have 52
-bits of of fraction whereas floats only have 23 bits for the fraction.  This
-would only be a problem if x were equal to some large integer, like INT_MAX.
-In this case, (float)x would round down, as int to float conversion does not
-oveflow but round down.  (float)dx however, would be cast to infinity, since
-casting a double too large to fit in a float would cause the float to be
-represented as infinity.  
+This is always true.  When an int is converted to float, there may be rounding.
+However, converting an int to a double, there is no chance of overflow because
+the double's range exceeds that of an ints and has greater precision.
+Convertinga double to a float may round, but it will round in the same way an
+int->float rounds, so this will always be equal.  
 
 B) dx - dy == (double) (x-y)
 This is not always true.  Because you subtract the ints first, if the 
@@ -27,10 +25,12 @@ because the double has enough bits to hold all these values.  Thus, this cannot
 overflow regardless of the order of operations, and so is always true.
 
 D) (dx * dy) * dz = dx * (dy * dz)
-False, if two large numbers were multiplied and exceded the limit of 2^52 - 1
-range, then we would overflow with our double, and thus the result would not be
-equal if the operation on the other side did not overflow as well or overflowed
-differently. 
+There is no chance of overflow, but the double could lose precision if the
+multipled bits exceeded 52 bits, and rounding values occured differently.  If
+dx = 2^30, dy = 3^30, dz = 4^30, then (dx * dy) would round to even first, while
+(dy * dz) would round to even as well, which could cause different precision
+values on both sides.  Thus, with very large numbers, you can lose precision
+when the order of operations is different, and then they will not be equal.
 
 E) dx / dx == dz / dz
 This does not always equal true. If dx == +0.0 or -0.0, then 0.0/0.0 would 
