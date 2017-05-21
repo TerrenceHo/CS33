@@ -1,0 +1,157 @@
+Terrence Ho
+804793446
+
+Copy folder to Linux server
+scp -r ~/Downloads/sthttpd-2.27.0 chuen@lnxsrv09.seas.ucla.edu:~ 
+
+Make patch changes with vim
+
+Use commands to build three different buggy executables
+./configure \
+LDFLAGS="-Xlinker --rpath=/usr/local/cs/gcc-$(gcc -dumpversion)/lib"
+
+make clean
+make CFLAGS='-g3 -O2 -fno-inline -fstack-protector-strong'
+mv src/thttpd src/thttpd-sp
+
+make clean
+make CFLAGS='-g3 -O2 -fno-inline -static-libasan -fsanitize=address'
+mv src/thttpd src/thttpd-as
+
+make clean
+make CFLAGS='-g3 -O2 -fno-inline -fno-stack-protector -zexecstack'
+mv src/thttpd src/thttpd-no
+
+These commands were used to test the server with my ports, which were determined
+with the previously given function.
+
+src/thttpd-sp -p 12604 -D
+curl http://localhost:12604/foo.txt
+
+src/thttpd-as -p 12605 -D         
+curl http://localhost:12605/foo.txt
+
+src/thttpd-no -p 12606 -D
+curl http://localhost:12606/foo.txt
+
+
+config file: "port=qqq...." There are 500 qs in total.  Used Python shell to
+write to file. Named config.txt
+
+gdb src/thttpd-sp 
+(gdb) r -p 12604 -D -C config.txt
+(gdb) bt
+
+ 0x00007ffff6db3118 in ?? () from /lib64/libgcc_s.so.1
+ #0  0x00007ffff6db3118 in ?? () from /lib64/libgcc_s.so.1
+ #1  0x00007ffff6db4019 in _Unwind_Backtrace () from /lib64/libgcc_s.so.1
+ #2  0x00007ffff76e8636 in backtrace () from /lib64/libc.so.6
+ #3  0x00007ffff7651f24 in __libc_message () from /lib64/libc.so.6
+ #4  0x00007ffff76ec047 in __fortify_fail () from /lib64/libc.so.6
+ #5  0x00007ffff76ec010 in __stack_chk_fail () from /lib64/libc.so.6
+ #6  0x0000000000405056 in read_config (filename=<optimized out>) at thttpd.c:1190
+ #7  0x7171717171717171 in ?? ()
+ #8  0x7171717171717171 in ?? ()
+ #9  0x7171717171717171 in ?? ()
+ #10 0x7171717171717171 in ?? ()
+ #11 0x7171717171717171 in ?? ()
+ #12 0x7171717171717171 in ?? ()
+ #13 0x7171717171717171 in ?? ()
+ #14 0x7171717171717171 in ?? ()
+ #15 0x7171717171717171 in ?? ()
+ #16 0x7171717171717171 in ?? ()
+ #17 0x7171717171717171 in ?? ()
+ #18 0x7171717171717171 in ?? ()
+ #19 0x7171717171717171 in ?? ()
+ #20 0x7171717171717171 in ?? ()
+ #21 0x7171717171717171 in ?? ()
+ #22 0x7171717171717171 in ?? ()
+ #23 0x7171717171717171 in ?? ()
+ #24 0x7171717171717171 in ?? ()
+ #25 0x7171717171717171 in ?? ()
+ #26 0x7171717171717171 in ?? ()
+ #27 0x7171717171717171 in ?? ()
+ #28 0x7171717171717171 in ?? ()
+ #29 0x7171717171717171 in ?? ()
+ #30 0x7171717171717171 in ?? ()
+ #31 0x7171717171717171 in ?? ()
+ #32 0x7171717171717171 in ?? ()
+ #33 0x7171717171717171 in ?? ()
+ #34 0x7171717171717171 in ?? ()
+ #35 0x7171717171717171 in ?? ()
+ #36 0x7171717171717171 in ?? ()
+ #37 0x7171717171717171 in ?? ()
+ #38 0x7171717171717171 in ?? ()
+ #39 0x7171717171717171 in ?? ()
+ #40 0x7171717171717171 in ?? ()
+ #41 0x7171717171717171 in ?? ()
+ #42 0x7171717171717171 in ?? ()
+ #43 0x7171717171717171 in ?? ()
+ #44 0x7171717171717171 in ?? ()
+ #45 0x7171717171717171 in ?? ()
+ #46 0x7171717171717171 in ?? ()
+ #47 0x7171717171717171 in ?? ()
+ #48 0x7171717171717171 in ?? ()
+ #49 0x7171717171717171 in ?? ()
+ #50 0x7171717171717171 in ?? ()
+ #51 0x0000000000000071 in ?? ()
+ #52 0x0000000000000000 in ?? ()
+
+The above is the trace I obtained with gdb, and it indicates we have hit a
+segmentation fault at line 1190 of thttpd.c, which corresponds to the
+read_config function.  Therefore, we should set a breakpoint before that line to
+see what happened before the crash.
+
+gdb src/thttpd-sp 
+(gdb) break 1189
+(gdb) set disassemble-next-line on
+(gdb) set logging on
+(gdb) r -p 12604 -D -C config.txt
+I used si (and ni to skip over functions) in order to obtain the following gdb log.
+
+Breakpoint 1, read_config (filename=<optimized out>) at thttpd.c:1189
+1189        (void) fclose( fp );
+=> 0x0000000000404f1b <read_config+1211>:   4c 89 e7    mov    %r12,%rdi
+ 0x0000000000404f1e <read_config+1214>:   e8 1d d5 ff ff  callq  0x402440 <fclose@plt>
+0x0000000000404f1e  1189        (void) fclose( fp );
+ 0x0000000000404f1b <read_config+1211>:   4c 89 e7    mov    %r12,%rdi
+=> 0x0000000000404f1e <read_config+1214>:   e8 1d d5 ff ff  callq  0x402440 <fclose@plt>
+1190        }
+=> 0x0000000000404f23 <read_config+1219>:   48 8b 44 24 68  mov    0x68(%rsp),%rax
+ 0x0000000000404f28 <read_config+1224>:   64 48 33 04 25 28 00 00 00  xor    %fs:0x28,%rax
+ 0x0000000000404f31 <read_config+1233>:   0f 85 1a 01 00 00   jne    0x405051 <read_config+1521>
+ 0x0000000000404f37 <read_config+1239>:   48 83 c4 70 add    $0x70,%rsp
+ 0x0000000000404f3b <read_config+1243>:   5b  pop    %rbx
+ 0x0000000000404f3c <read_config+1244>:   5d  pop    %rbp
+ 0x0000000000404f3d <read_config+1245>:   41 5c   pop    %r12
+ 0x0000000000404f3f <read_config+1247>:   41 5d   pop    %r13
+ 0x0000000000404f41 <read_config+1249>:   41 5e   pop    %r14
+ 0x0000000000404f43 <read_config+1251>:   c3  retq
+0x0000000000404f28  1190        }
+ 0x0000000000404f23 <read_config+1219>:   48 8b 44 24 68  mov    0x68(%rsp),%rax
+=> 0x0000000000404f28 <read_config+1224>:   64 48 33 04 25 28 00 00 00  xor    %fs:0x28,%rax
+ 0x0000000000404f31 <read_config+1233>:   0f 85 1a 01 00 00   jne    0x405051 <read_config+1521>
+ 0x0000000000404f37 <read_config+1239>:   48 83 c4 70 add    $0x70,%rsp
+ 0x0000000000404f3b <read_config+1243>:   5b  pop    %rbx
+ 0x0000000000404f3c <read_config+1244>:   5d  pop    %rbp
+ 0x0000000000404f3d <read_config+1245>:   41 5c   pop    %r12
+ 0x0000000000404f3f <read_config+1247>:   41 5d   pop    %r13
+ 0x0000000000404f41 <read_config+1249>:   41 5e   pop    %r14
+ 0x0000000000404f43 <read_config+1251>:   c3  retq
+0x0000000000404f31  1190        }
+ 0x0000000000404f23 <read_config+1219>:   48 8b 44 24 68  mov    0x68(%rsp),%rax
+ 0x0000000000404f28 <read_config+1224>:   64 48 33 04 25 28 00 00 00  xor    %fs:0x28,%rax
+=> 0x0000000000404f31 <read_config+1233>:   0f 85 1a 01 00 00   jne    0x405051 <read_config+1521>
+ 0x0000000000404f37 <read_config+1239>:   48 83 c4 70 add    $0x70,%rsp
+ 0x0000000000404f3b <read_config+1243>:   5b  pop    %rbx
+ 0x0000000000404f3c <read_config+1244>:   5d  pop    %rbp
+ 0x0000000000404f3d <read_config+1245>:   41 5c   pop    %r12
+ 0x0000000000404f3f <read_config+1247>:   41 5d   pop    %r13
+ 0x0000000000404f41 <read_config+1249>:   41 5e   pop    %r14
+ 0x0000000000404f43 <read_config+1251>:   c3  retq
+1190        }
+=> 0x0000000000405051 <read_config+1521>:   e8 5a d4 ff ff  callq  0x4024b0 <__stack_chk_fail@plt>
+
+This seems to indicate that we have detected that we have a buffer overrun when
+it compares the stack protection canary to what the value should have been, and
+so the jne command handles the fact that we have a buffer overflow.
