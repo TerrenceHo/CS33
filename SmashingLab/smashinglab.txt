@@ -1,6 +1,7 @@
 Terrence Ho
 804793446
 
+2) 
 Copy folder to Linux server
 scp -r ~/Downloads/sthttpd-2.27.0 chuen@lnxsrv09.seas.ucla.edu:~ 
 
@@ -22,6 +23,7 @@ make clean
 make CFLAGS='-g3 -O2 -fno-inline -fno-stack-protector -zexecstack'
 mv src/thttpd src/thttpd-no
 
+3 + 4)
 These commands were used to test the server with my ports, which were determined
 with the previously given function.
 
@@ -38,6 +40,8 @@ curl http://localhost:12606/foo.txt
 config file: "port=qqq...." There are 500 qs in total.  Used Python shell to
 write to file. Named config.txt
 
+
+5)
 gdb src/thttpd-sp 
 (gdb) r -p 12604 -D -C config.txt
 (gdb) bt
@@ -100,7 +104,9 @@ gdb src/thttpd-sp
 The above is the trace I obtained with gdb, and it indicates we have hit a
 segmentation fault at line 1190 of thttpd.c, which corresponds to the
 read_config function.  Therefore, we should set a breakpoint before that line to
-see what happened before the crash.
+see what happened before the crash. The ?? () signifies that the address was
+overwritten and the program could not fine it, which was overwritten when a
+buffer overflow occured.  
 
 gdb src/thttpd-sp 
 (gdb) break 1189
@@ -153,5 +159,291 @@ Breakpoint 1, read_config (filename=<optimized out>) at thttpd.c:1189
 => 0x0000000000405051 <read_config+1521>:   e8 5a d4 ff ff  callq  0x4024b0 <__stack_chk_fail@plt>
 
 This seems to indicate that we have detected that we have a buffer overrun when
-it compares the stack protection canary to what the value should have been, and
+the program compares the stack protection canary to what the value should have been, and
 so the jne command handles the fact that we have a buffer overflow.
+
+
+6)
+gdb src/thttpd-as
+(gdb) r -p 12605 -D -C config.txt
+Starting program: /w/home.11/cs/ugrad/chuen/sthttpd-2.27.0/src/thttpd-as -p
+12605 -D -C config.txt
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+=================================================================
+==38857==ERROR: AddressSanitizer: stack-buffer-overflow on address
+0x7fffffffcdc4 at pc 0x00000043aec9 bp 0x7fffffffcd20 sp 0x7fffffffc4d0
+READ of size 506 at 0x7fffffffcdc4 thread T0
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff7075118 in ?? () from /lib64/libgcc_s.so.1
+
+(gdb) backtrace
+
+#0  0x00007ffff7075118 in ?? () from /lib64/libgcc_s.so.1
+[16/3375]
+#1  0x00007ffff7076019 in _Unwind_Backtrace () from /lib64/libgcc_s.so.1
+#2  0x00000000004b8ae3 in __sanitizer::BufferedStackTrace::SlowUnwindStack
+(this=0x7fffffffbc40,
+pc=4435657, max_depth=<optimized out>)
+at
+../../../../gcc-6.3.0/libsanitizer/sanitizer_common/sanitizer_unwind_linux_libcdep.cc:113
+#3  0x00000000004b42e1 in __asan::GetStackTraceWithPcBpAndContext
+(fast=false, context=0x0,
+bp=140737488342304, pc=4435657, max_depth=256, stack=0x7fffffffbc40)
+at ../../../../gcc-6.3.0/libsanitizer/asan/asan_stack.h:49
+#4  __asan::ReportGenericError (pc=<optimized out>,
+bp=bp@entry=140737488342304,
+sp=sp@entry=140737488340176,
+addr=addr@entry=140737488342468,
+is_write=is_write@entry=false,
+access_size=access_size@entry=506, exp=<optimized out>,
+fatal=<optimized out>)
+at
+../../../../gcc-6.3.0/libsanitizer/asan/asan_report.cc:1092
+#5  0x000000000043aee4 in __interceptor_strchr
+(str=<optimized out>, c=<optimized out>)
+at
+../../../../gcc-6.3.0/libsanitizer/asan/asan_interceptors.cc:468
+#6  0x00000000004e0b51 in read_config
+(filename=<optimized out>) at thttpd.c:1018
+#7  0x7171717171717171 in ?? ()
+#8  0x7171717171717171 in ?? ()
+#9  0x7171717171717171 in ?? ()
+#10 0x7171717171717171 in ?? ()
+#11 0x7171717171717171 in ?? ()
+#12 0x7171717171717171 in ?? ()
+#13 0x7171717171717171 in ?? ()
+#14 0x7171717171717171 in ?? ()
+#15 0x7171717171717171 in ?? ()
+#16 0x7171717171717171 in ?? ()
+#17 0x7171717171717171 in ?? ()
+#18 0x7171717171717171 in ?? ()
+#19 0x7171717171717171 in ?? ()
+#20 0x7171717171717171 in ?? ()
+#21 0x7171717171717171 in ?? ()
+#22 0x7171717171717171 in ?? ()
+#23 0x7171717171717171 in ?? ()
+#24 0x7171717171717171 in ?? ()
+#25 0x7171717171717171 in ?? ()
+#26 0x7171717171717171 in ?? ()
+#27 0x7171717171717171 in ?? ()
+#28 0x7171717171717171 in ?? ()
+#29 0x7171717171717171 in ?? ()
+#30 0x7171717171717171 in ?? ()
+#31 0x7171717171717171 in ?? ()
+#32 0x7171717171717171 in ?? ()
+#33 0x7171717171717171 in ?? ()
+#34 0x7171717171717171 in ?? ()
+#35 0x7171717171717171 in ?? ()
+#36 0x7171717171717171 in ?? ()
+#37 0x7171717171717171 in ?? ()
+#38 0x7171717171717171 in ?? ()
+#39 0x7171717171717171 in ?? ()
+#40 0x7171717171717171 in ?? ()
+#41 0x7171717171717171 in ?? ()
+#42 0x7171717171717171 in ?? ()
+#43 0x0000000000000071 in ?? ()
+#44 0x0000000000504112 in ?? ()
+#45 0x00000000004c12f0 in __sanitizer::MmapOrDie
+(size=<optimized out>,)
+mem_type=0x7171717171717171 <error: Cannot access memory at address
+0x7171717171717171>)
+at
+../../../../gcc-6.3.0/libsanitizer/sanitizer_common/sanitizer_posix.cc:121
+#46 0x00000000004beeaa in
+__sanitizer::StackDepotBase<__sanitizer::StackDepotNode, 1, 20>::Put (
+this=0x967e80 <__sanitizer::theDepot>, args=..., inserted=0x0)
+at
+../../../../gcc-6.3.0/libsanitizer/sanitizer_common/sanitizer_stackdepotbase.h:105
+#47 0x00007fffffffe0d0 in ?? ()
+#48 0x0000000000746f80 in ?? ()
+#49 0x0000000000419eac in
+__sanitizer::GenericScopedLock<__sanitizer::BlockingMutex>::~GenericScopedLock
+(this=<synthetic pointer>, __in_chrg=<optimized out>)
+at
+../../../../gcc-6.3.0/libsanitizer/sanitizer_common/sanitizer_mutex.h:181
+#50 __asan_register_globals (globals=<optimized out>,
+n=7630720)
+at
+../../../../gcc-6.3.0/libsanitizer/asan/asan_globals.cc:220
+#51 0x00000000004f5ecd in __libc_csu_init ()
+#52 0x00007ffff6cc6b35 in __libc_start_main () from
+/lib64/libc.so.6
+#53 0x00000000004093fa in _start ()
+
+We can see that the buffer overrun happens at line 1018 at thttpd.c, in the
+read_config function.
+
+gdb src/thttpd-as
+(gdb) break 1017
+(gdb) r -p 12605 -D -C config.txt
+(gdb) set disassemble-next-line on
+(gdb) si
+0x00000000004e0b47      1018            if ( ( cp = strchr( line, '#' ) ) != (char*) 0 )
+   0x00000000004e0b43 <read_config+179>:        48 8b 3c 24     mov    (%rsp),%rdi
+=> 0x00000000004e0b47 <read_config+183>:        be 23 00 00 00  mov    $0x23,%esi
+   0x00000000004e0b4c <read_config+188>:
+    e8 2f a5 f5 ff      callq  0x43b080 <__interceptor_strchr(char const*, int)>
+   0x00000000004e0b51 <read_config+193>:        48 85 c0        test   %rax,%rax
+   0x00000000004e0b54 <read_config+196>:        74 24   je     0x4e0b7a <read_config+234>
+(gdb) si
+0x00000000004e0b4c      1018            if ( ( cp = strchr( line, '#' ) ) != (char*) 0 )
+   0x00000000004e0b43 <read_config+179>:        48 8b 3c 24     mov    (%rsp),%rdi
+   0x00000000004e0b47 <read_config+183>:        be 23 00 00 00  mov    $0x23,%esi
+=> 0x00000000004e0b4c <read_config+188>:        e8 2f a5 f5 ff  callq  0x43b080 <__interceptor_strchr(char const*, int)>
+   0x00000000004e0b51 <read_config+193>:        48 85 c0        test   %rax,%rax
+   0x00000000004e0b54 <read_config+196>:        74 24   je     0x4e0b7a <read_config+234>
+
+We see that the interceptor_strchr function has been called, which is where
+address sanitation takes place and the function throws a stack overflow error,
+which is where the function read_config and crashes the program. 
+
+
+7) 
+gdb src/thttpd-no
+(gdb) r -P 12606 -D -C config.txt
+
+Starting program: /w/home.11/cs/ugrad/chuen/sthttpd-2.27.0/src/thttpd-no -p
+12606 -D -C config.txt
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000000404d9f in read_config (filename=<optimized out>) at thttpd.c:1190
+1190        }
+
+It seems as though the program failed at line 1190 thttpd.c, so we will set a
+breakpoint there.
+
+gdb src/thttpd-no
+(gdb) break 1189
+(gdb) r -p 12606 -D -C config.txt
+(gdb) set disassemble-next-line on
+(gdb) si
+
+Breakpoint 1, read_config (filename=<optimized out>) at thttpd.c:1189
+1189        (void) fclose( fp );
+=> 0x0000000000404d8b <read_config+1195>:       4c 89 e7        mov    %r12,%rdi
+   0x0000000000404d8e <read_config+1198>:       e8 4d d6 ff ff  callq  0x4023e0 <fclose@plt>
+(gdb) si
+0x0000000000404d8e      1189        (void) fclose( fp );
+   0x0000000000404d8b <read_config+1195>:       4c 89 e7        mov    %r12,%rdi
+=> 0x0000000000404d8e <read_config+1198>:       e8 4d d6 ff ff  callq  0x4023e0 <fclose@plt>
+(gdb) ni
+1190        }
+=> 0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+   0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+0x0000000000404d97      1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+=> 0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+   0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+0x0000000000404d98      1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+=> 0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+   0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+0x0000000000404d99      1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+=> 0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+   0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+0x0000000000404d9b      1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+=> 0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+   0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+0x0000000000404d9d      1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+=> 0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+   0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+0x0000000000404d9f      1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+=> 0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000000404d9f in read_config (filename=<optimized out>) at thttpd.c:1190
+1190        }
+   0x0000000000404d93 <read_config+1203>:       48 83 c4 70     add    $0x70,%rsp
+   0x0000000000404d97 <read_config+1207>:       5b      pop    %rbx
+   0x0000000000404d98 <read_config+1208>:       5d      pop    %rbp
+   0x0000000000404d99 <read_config+1209>:       41 5c   pop    %r12
+   0x0000000000404d9b <read_config+1211>:       41 5d   pop    %r13
+   0x0000000000404d9d <read_config+1213>:       41 5e   pop    %r14
+=> 0x0000000000404d9f <read_config+1215>:       c3      retq
+(gdb) si
+
+Program terminated with signal SIGSEGV, Segmentation fault.
+The program no longer exists.
+
+The program read incorrect memory and crashed, which manifested as a
+Segmentation fault.  
+
+8)
+
+make clean
+make CFLAGS='-S -O2 -fno-inline -fstack-protector-strong'
+mv src/thttpd.o src/thttpd-sp.s
+
+make clean
+make CFLAGS='-S -O2 -fno-inline -static-libasan -fsanitize=address'
+mv src/thttpd.o src/thttpd-as.s
+
+make clean
+make CFLAGS='-S -O2 -fno-inline -fno-stack-protector -zexecstack'
+mv src/thttpd.o src/thttpd-no.s
+
+These are the commands I used to make the assembly files
+
+thttpd-sp.s has arounc 4.4k lines.  thttpd-sp works by placing "canaries" on
+both sides of the buffer and will call a function to check whether this buffer
+has been broken.  If it has, it will output an error.  However, this check
+occurs outside the function handle_read, so it seems as though that function was
+not affected by the stack protection.
+
+thttpd-as.s has around 9.6k lines, which is more than double of thttpd-sp.s.
+thttpd-as version of handle_read is much larger than thttpd.sp, which suggests
+that thttpd-as does many more checks to ensure memory does not overflow. It 
+checks for shadow memories, and if shadow memory has been poisoned it will 
+call the function __asan_report_loadn or __asan_report_storen, which puts out 
+the error that a stack overflow has occured.  
+
+thttpd-no.s also has around 4.4k lines, which suggests it is not much different
+from thttpd-sp.  In fact, the handle_read functions for both are exactly the
+same.  thttpd-sp only protects character arrays, variable addresses, and 
+registers, none of which is affected in handle_read, so handle_read function
+should not be changed.  
