@@ -1,0 +1,17 @@
+Terrence Ho
+804793446
+
+12.18)
+A) Unsafe, crossed unsafe region
+B) Safe, doesn't cross unsafe region
+C) Unsafe, crosses unsafe region
+
+12.24) The RIO functions all take in a pointer rio_t *rp or char *usrbuf, which
+indicates that these functions are not explicitly reentrant.  Thus, they are
+implicitly reentrant, wherein the different threads must make sure that their
+pointers do not point to any shared memory.  If the different threads accessed
+the same memory, then the functions would not be reentrant, but then it is up to
+the user to make these functions reentrant; the user must ensure that all
+pointers passed in must point to unique memory.  If they did not point to shared
+memory these functions are implicitly reentrant, else these functions are
+implicitly non-reentrant.
