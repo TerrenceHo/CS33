@@ -1,0 +1,143 @@
+Terrence Ho
+804793446
+
+We begin the lab by moving all the files to the linux server.  Compile the
+program normally to see how fast it is normally.
+
+make seq
+./seq
+
+FUNC TIME : 0.505143
+TOTAL TIME : 2.849281
+
+We compile the program with gprof first to see which functions are the bottle 
+neck.
+
+make seq GPROF=1
+./seq
+
+FUNC TIME : 0.667535
+TOTAL TIME : 3.138077
+
+gprof seq | less
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ms/call  ms/call  name
+ 58.10      0.47     0.47       15    31.38    34.54  func1
+ 30.91      0.72     0.25  5177344     0.00     0.00  rand2
+  3.71      0.75     0.03        1    30.04   232.85  addSeed
+  2.47      0.77     0.02                             filter
+  2.47      0.79     0.02                             sequence
+  1.24      0.80     0.01       15     0.67     0.67  func5
+  1.24      0.81     0.01        1    10.01    10.01  imdilateDisk
+  0.00      0.81     0.00   983042     0.00     0.00  round
+  0.00      0.81     0.00   491520     0.00     0.00  findIndexBin
+  0.00      0.81     0.00       16     0.00     0.00  dilateMatrix
+  0.00      0.81     0.00       15     0.00     0.00  func2
+  0.00      0.81     0.00       15     0.00     0.00  func3
+  0.00      0.81     0.00       15     0.00     0.00  func4
+  0.00      0.81     0.00       15     0.00     0.00  rand1
+  0.00      0.81     0.00        2     0.00     0.00  get_time
+  0.00      0.81     0.00        1     0.00     0.00  elapsed_time
+  0.00      0.81     0.00        1     0.00     0.00  fillMatrix
+  0.00      0.81     0.00        1     0.00     0.00  func0
+  0.00      0.81     0.00        1     0.00     0.00  getNeighbors
+
+We see that the main bottlenecks are func1 and rand2. rand2 is a function built
+into util.h, so we will look at func1 first, because we cannot edit rand2, only
+replace it with an equivalent but faster function.
+
+We parallelize the first for-loop in func1 with #pragma omp parallel for.  Then
+we recompile it to see the speedup
+
+make omp
+./omp
+
+FUNC TIME : 0.371481
+TOTAL TIME : 2.508830
+
+make omp GPROF=1
+./omp
+FUNC TIME : 0.495572
+TOTAL TIME : 2.742447
+
+gprof omp | less
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ms/call  ms/call  name
+ 52.80      0.29     0.29       15    19.36    19.36  func1
+ 30.95      0.46     0.17  4233047     0.00     0.00  rand2
+  5.46      0.49     0.03   491520     0.00     0.00  findIndexBin
+  3.64      0.51     0.02                             sequence
+  1.82      0.52     0.01       15     0.67     2.67  func5
+  1.82      0.53     0.01        1    10.01   178.68  addSeed
+  1.82      0.54     0.01        1    10.01    10.01  imdilateDisk
+  1.82      0.55     0.01                             filter
+  0.00      0.55     0.00   983042     0.00     0.00  round
+  0.00      0.55     0.00       16     0.00     0.00  dilateMatrix
+  0.00      0.55     0.00       15     0.00     0.00  func2
+  0.00      0.55     0.00       15     0.00     0.00  func3
+  0.00      0.55     0.00       15     0.00     0.00  func4
+  0.00      0.55     0.00       15     0.00     0.00  rand1
+  0.00      0.55     0.00        2     0.00     0.00  get_time
+  0.00      0.55     0.00        1     0.00     0.00  elapsed_time
+  0.00      0.55     0.00        1     0.00     0.00  fillMatrix
+  0.00      0.55     0.00        1     0.00     0.00  func0
+  0.00      0.55     0.00        1     0.00     0.00  getNeighbors
+
+We have sped up func1 by 8% now, and now we can try to parallelize the other
+functions to maximize performance.  We want to parallelize our code to the point
+where no func functions are a bottleneck.
+
+make omp
+./omp
+
+FUNC TIME : 0.047935
+TOTAL TIME : 2.219275
+
+make omp GPROF=1
+./omp
+
+FUNC TIME : 0.148194
+TOTAL TIME : 2.242141
+
+gprof omp | less
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ms/call  ms/call  name
+ 64.93      0.48     0.48                             filter
+ 20.29      0.63     0.15  4221142     0.00     0.00  rand2
+  8.12      0.69     0.06     9939     0.01     0.01  findIndexBin
+  4.06      0.72     0.03        1    30.03   179.24  addSeed
+  1.35      0.73     0.01        1    10.01    10.01  imdilateDisk
+  1.35      0.74     0.01                             sequence
+  0.00      0.74     0.00    45836     0.00     0.00  round
+  0.00      0.74     0.00       16     0.00     0.00  dilateMatrix
+  0.00      0.74     0.00       15     0.00     0.00  func1
+  0.00      0.74     0.00       15     0.00     0.00  func2
+  0.00      0.74     0.00       15     0.00     0.00  func3
+  0.00      0.74     0.00       15     0.00     0.00  func4
+  0.00      0.74     0.00       15     0.00     0.00  func5
+  0.00      0.74     0.00       15     0.00     0.00  rand1
+  0.00      0.74     0.00        2     0.00     0.00  get_time
+  0.00      0.74     0.00        1     0.00     0.00  elapsed_time
+  0.00      0.74     0.00        1     0.00     0.00  fillMatrix
+  0.00      0.74     0.00        1     0.00     0.00  func0
+  0.00      0.74     0.00        1     0.00     0.00  getNeighbors
+
+None of the function calls are the bottle neck any more, and we have achieved a
+speedup of ____. Now we have to see if our output is correct.
+
+make check
+cp omp filter
+./filter
+FUNC TIME : 0.055394
+TOTAL TIME : 2.367306
+diff --brief correct.txt output.txt
+
+Our output is correct, and we do not need to do a memory check because we did
+not allocate anything (even if the memory checker does say we have memory
+leaks).
+
