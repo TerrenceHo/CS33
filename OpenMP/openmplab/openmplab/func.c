@@ -4,6 +4,7 @@
 void func0(double *weights, double *arrayX, double *arrayY, int xr, int yr, int n)
 {
 	int i;
+    omp_set_num_threads(12);
     #pragma omp parallel for
 	for(i = 0; i < n; i++){
 		weights[i] = 1/((double)(n));
@@ -20,12 +21,14 @@ void func1(int *seed, int *array, double *arrayX, double *arrayY,
    	int index_X, index_Y;
 	int max_size = X*Y*Z;
 
+    omp_set_num_threads(12);
     #pragma omp parallel for
    	for(i = 0; i < n; i++){
    		arrayX[i] += 1 + 5*rand2(seed, i);
    		arrayY[i] += -2 + 2*rand2(seed, i);
    	}
     
+    omp_set_num_threads(12);
     #pragma omp parallel for private (index_X, index_Y, j)
    	for(i = 0; i<n; i++){
    		for(j = 0; j < Ones; j++){
@@ -49,12 +52,15 @@ void func2(double *weights, double *probability, int n)
 {
 	int i;
 	double sumWeights=0;
+    omp_set_num_threads(12);
     #pragma omp parallel for
 	for(i = 0; i < n; i++)
    		weights[i] = weights[i] * exp(probability[i]);
+    omp_set_num_threads(12);
     #pragma omp parallel for reduction (+:sumWeights)
    	for(i = 0; i < n; i++)
    		sumWeights += weights[i];
+    omp_set_num_threads(12);
     #pragma omp parallel for
 	for(i = 0; i < n; i++)
    		weights[i] = weights[i]/sumWeights;
@@ -66,6 +72,7 @@ void func3(double *arrayX, double *arrayY, double *weights, double *x_e, double 
 	double estimate_y=0.0;
     int i;
 
+    omp_set_num_threads(12);
     #pragma omp parallel for reduction(+:estimate_x, estimate_y) 
 	for(i = 0; i < n; i++){
    		estimate_x += arrayX[i] * weights[i];
@@ -80,6 +87,7 @@ void func3(double *arrayX, double *arrayY, double *weights, double *x_e, double 
 void func4(double *u, double u1, int n)
 {
 	int i;
+    omp_set_num_threads(12);
     #pragma omp parallel for
 	for(i = 0; i < n; i++){
    		u[i] = u1 + i/((double)(n));
@@ -90,6 +98,7 @@ void func5(double *x_j, double *y_j, double *arrayX, double *arrayY, double *wei
 {
 	int i, j;
 
+    omp_set_num_threads(12);
     #pragma omp parallel for private(i)
 	for(j = 0; j < n; j++){
    		//i = findIndex(cfd, n, u[j]);
@@ -101,6 +110,7 @@ void func5(double *x_j, double *y_j, double *arrayX, double *arrayY, double *wei
 
    	}
 
+    omp_set_num_threads(12);
     #pragma omp parallel for
 	for(i = 0; i < n; i++){
 		arrayX[i] = x_j[i];

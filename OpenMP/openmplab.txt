@@ -45,8 +45,7 @@ Each sample counts as 0.01 seconds.
   0.00      0.81     0.00        1     0.00     0.00  getNeighbors
 
 We see that the main bottlenecks are func1 and rand2. rand2 is a function built
-into util.h, so we will look at func1 first, because we cannot edit rand2, only
-replace it with an equivalent but faster function.
+into util.h, so we will look at func1 first, because we cannot edit rand2.
 
 We parallelize the first for-loop in func1 with #pragma omp parallel for.  Then
 we recompile it to see the speedup
@@ -87,9 +86,32 @@ Each sample counts as 0.01 seconds.
   0.00      0.55     0.00        1     0.00     0.00  func0
   0.00      0.55     0.00        1     0.00     0.00  getNeighbors
 
-We have sped up func1 by 8% now, and now we can try to parallelize the other
+We have sped up func1 and now we can try to parallelize the other
 functions to maximize performance.  We want to parallelize our code to the point
 where no func functions are a bottleneck.
+
+After experimenting with open MP commands, I find that with for-loops that do
+not use any outside variable, you can simply do "#pragma omp parallel for".  If
+it initializes the value of a variable declared outside of the for loop, use "#pragma omp
+parallel for private(first_variable, second_variable, etc)".  This will protect
+the variable that was declared outside the loop by giving each thread a copy of
+the variable, so that if one thread changes that variable, other threads will
+use their own value of that variable.  
+
+If a variable declared outside the 
+for-loop is being updated, i.e. sum+=1, then use "#pragma omp parallel for 
+reduction(+:variable_one, variable_two, etc)". This will ensure that the value
+being updated is correctly updated by threads, and not mishandled (if a thread
+adds to sum, but a context switch happens and a different thread also adds to
+that thread without knowing that another thread already updated it). For every
+for-loop, we use omp private, omp reduction, or regular omp to parallelize the
+loops.
+
+We also tested with the optimal number of threads to use for OpenMP, which we
+came to believe was around 12 threads.  Creating too many threads caused too
+much overhead with lots of context switching. After we parallelize all for loops 
+in all five functions, we can now test our program.
+ 
 
 make omp
 ./omp
@@ -128,7 +150,7 @@ Each sample counts as 0.01 seconds.
   0.00      0.74     0.00        1     0.00     0.00  getNeighbors
 
 None of the function calls are the bottle neck any more, and we have achieved a
-speedup of ____. Now we have to see if our output is correct.
+speedup of 10.5x. Now we have to see if our output is correct.
 
 make check
 cp omp filter
